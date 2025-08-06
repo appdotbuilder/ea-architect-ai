@@ -1,5 +1,8 @@
 
+import { db } from '../db';
+import { componentsTable } from '../db/schema';
 import { type Component } from '../schema';
+import { eq } from 'drizzle-orm';
 
 export async function getComponentReport(projectId: number): Promise<{
   components: Component[];
@@ -9,15 +12,36 @@ export async function getComponentReport(projectId: number): Promise<{
     by_type: Record<string, number>;
   };
 }> {
-  // This is a placeholder declaration! Real code should be implemented here.
-  // The goal of this handler is generating a comprehensive report of all components in a project.
-  // It should include detailed component information and summary statistics.
-  return Promise.resolve({
-    components: [],
-    summary: {
-      total: 0,
-      by_layer: {},
-      by_type: {}
-    }
-  });
+  try {
+    // Fetch all components for the project
+    const components = await db.select()
+      .from(componentsTable)
+      .where(eq(componentsTable.project_id, projectId))
+      .execute();
+
+    // Initialize summary counters
+    const by_layer: Record<string, number> = {};
+    const by_type: Record<string, number> = {};
+
+    // Process each component and build summary statistics
+    components.forEach(component => {
+      // Count by layer
+      by_layer[component.layer] = (by_layer[component.layer] || 0) + 1;
+      
+      // Count by type
+      by_type[component.type] = (by_type[component.type] || 0) + 1;
+    });
+
+    return {
+      components,
+      summary: {
+        total: components.length,
+        by_layer,
+        by_type
+      }
+    };
+  } catch (error) {
+    console.error('Component report generation failed:', error);
+    throw error;
+  }
 }

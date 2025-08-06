@@ -1,18 +1,36 @@
 
+import { db } from '../db';
+import { projectsTable, projectMembersTable } from '../db/schema';
 import { type CreateProjectInput, type Project } from '../schema';
 
 export async function createProject(input: CreateProjectInput): Promise<Project> {
-  // This is a placeholder declaration! Real code should be implemented here.
-  // The goal of this handler is creating a new EA project and persisting it in the database.
-  // It should also create the project creator as the project owner in project_members table.
-  return Promise.resolve({
-    id: 0, // Placeholder ID
-    name: input.name,
-    description: input.description || null,
-    organization_id: input.organization_id,
-    created_by: input.created_by,
-    status: 'active',
-    created_at: new Date(),
-    updated_at: new Date()
-  } as Project);
+  try {
+    // Insert project record
+    const projectResult = await db.insert(projectsTable)
+      .values({
+        name: input.name,
+        description: input.description || null,
+        organization_id: input.organization_id,
+        created_by: input.created_by
+      })
+      .returning()
+      .execute();
+
+    const project = projectResult[0];
+
+    // Create project creator as owner in project_members table
+    await db.insert(projectMembersTable)
+      .values({
+        project_id: project.id,
+        user_id: input.created_by,
+        role: 'owner',
+        added_by: input.created_by
+      })
+      .execute();
+
+    return project;
+  } catch (error) {
+    console.error('Project creation failed:', error);
+    throw error;
+  }
 }

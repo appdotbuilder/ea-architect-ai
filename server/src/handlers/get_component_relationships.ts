@@ -1,8 +1,17 @@
 
+import { db } from '../db';
+import { componentRelationshipsTable } from '../db/schema';
 import { type ComponentRelationship } from '../schema';
 
-export async function getComponentRelationships(): Promise<ComponentRelationship[]> {
-  // This is a placeholder declaration! Real code should be implemented here.
-  // The goal of this handler is fetching all component relationships from the database.
-  return [];
-}
+export const getComponentRelationships = async (): Promise<ComponentRelationship[]> => {
+  try {
+    const results = await db.select()
+      .from(componentRelationshipsTable)
+      .execute();
+
+    return results;
+  } catch (error) {
+    console.error('Failed to fetch component relationships:', error);
+    throw error;
+  }
+};

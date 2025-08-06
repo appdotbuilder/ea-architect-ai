@@ -1,8 +1,19 @@
 
+import { db } from '../db';
+import { projectsTable } from '../db/schema';
+import { eq } from 'drizzle-orm';
 import { type Project } from '../schema';
 
-export async function getProjectsByOrganization(organizationId: number): Promise<Project[]> {
-  // This is a placeholder declaration! Real code should be implemented here.
-  // The goal of this handler is fetching all projects for a specific organization.
-  return [];
-}
+export const getProjectsByOrganization = async (organizationId: number): Promise<Project[]> => {
+  try {
+    const results = await db.select()
+      .from(projectsTable)
+      .where(eq(projectsTable.organization_id, organizationId))
+      .execute();
+
+    return results;
+  } catch (error) {
+    console.error('Get projects by organization failed:', error);
+    throw error;
+  }
+};
